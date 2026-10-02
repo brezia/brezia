@@ -421,6 +421,26 @@ export async function createServer(opts: ServerOptions = {}) {
   // from an in-memory map; a friendly placeholder when the UI has not been built.
   registerUi(app, opts.uiDir);
 
+  // Binding loopback limits who can CONNECT, but a browser connects on behalf of any
+  // page it has open. After a DNS rebind such a page is same-origin to the browser
+  // and only the Host header still names the foreign domain. So every route above
+  // (hooks bind at ready, not in registration order) requires a loopback Host, and
+  // a browser-sent Origin must be this same origin. The hook path skips the Origin
+  // rule — Claude Code is not a browser — and fails to no-decision, never an error.
+  // Nothing may be framed either: a hostile page could otherwise embed the real
+  // inbox and steal a click or an `a` keypress.
+  app.addHook("onRequest", async (req, reply) => {
+    reply.headers({ "X-Frame-Options": "DENY", "Content-Security-Policy": "frame-ancestors 'none'" });
+    const host = (req.headers.host ?? "").toLowerCase();
+    const origin = req.headers.origin?.toLowerCase();
+    const onHookPath = req.routeOptions.url === "/v1/hook";
+    const sameOrigin = onHookPath || origin === undefined || origin === `http://${host}`;
+    if (/^(127\.0\.0\.1|localhost)(:\d+)?$/.test(host) && sameOrigin) return;
+    return onHookPath
+      ? reply.code(200).send(NO_DECISION)
+      : reply.code(403).send({ error: "non-local Host or cross-origin request" });
+  });
+
   return app;
 }
 

@@ -193,7 +193,7 @@ export const PORT = 4747;
   (`packages/daemon/src/index.ts:66`).
 - **Startup asserts loopback.** After `listen()`, `start()` walks every bound address and
   throws if any is not `127.0.0.1`, closing the server first
-  (`packages/daemon/src/index.ts:440`). A test binds for real and checks it
+  (`packages/daemon/src/index.ts:460`). A test binds for real and checks it
   (`hook-endpoint.test.ts:253`).
 - **Port-in-use** is reported with a clear, actionable message rather than a stack trace
   (`packages/cli/src/up.ts:114`).
@@ -266,6 +266,7 @@ By design — these are guarantees, not omissions:
 |---|---|
 | The bind address (`127.0.0.1`) | It *is* the v0 security model (decision 006 / boundaries). |
 | CORS / auth | No cross-origin client exists; same-origin UI. |
+| The accepted `Host` names (`127.0.0.1`, `localhost`) | The DNS-rebinding guard: a request addressed to any other name is refused. |
 | The DB path (`~/.brezia/brezia.db`) | Fixed evidence-artifact location. |
 | Telemetry / phone-home / update checks | None exist. Ever. |
 | `audit_log` mutability | Append-only; no UPDATE/DELETE exists in the codebase. |

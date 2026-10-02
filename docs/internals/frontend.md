@@ -413,10 +413,14 @@ server: {
   host: "127.0.0.1",
   port: 5173,
   proxy: {
-    "/v1": { target: "http://127.0.0.1:4747", changeOrigin: true },
+    "/v1": { target: "http://127.0.0.1:4747" },
   },
 },
 ```
+
+There is deliberately no `changeOrigin`: the daemon compares each request's `Origin` with
+its `Host` ([security.md](../security.md#the-v0-security-model-localhost-binding)), so the
+proxy must pass the dev server's `Host` through unchanged or the inbox's POSTs are refused.
 
 The dev server binds `127.0.0.1` too, mirroring the daemon's loopback constraint. In dev
 you run `npm run dev:daemon` and `npm run dev:ui` side by side; the proxy makes the

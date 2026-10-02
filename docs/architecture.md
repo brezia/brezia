@@ -136,7 +136,7 @@ export const PORT = 4747;
 ```
 
 ```ts
-// packages/daemon/src/index.ts:440 — startup invariant, covered by a test
+// packages/daemon/src/index.ts:460 — startup invariant, covered by a test
 for (const addr of app.addresses()) {
   if (addr.address !== HOST) {
     await app.close();
@@ -147,7 +147,9 @@ for (const addr of app.addresses()) {
 
 > **Security.** Localhost binding *is* the v0 security model: no auth, no CORS, no
 > configurable address. The inbox is served same-origin by the daemon, so there is no
-> legitimate cross-origin client. Detail in [security.md](security.md).
+> legitimate cross-origin client; a request that is not addressed to loopback, or that
+> announces another origin, is refused, and nothing may be framed. Detail in
+> [security.md](security.md).
 
 The transport into the daemon is a Claude Code **HTTP hook**, decided live in the A2 spike
 (decision 008): the adapter is pure settings config — `{ "type": "http", "url":

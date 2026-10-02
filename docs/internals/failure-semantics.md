@@ -163,6 +163,7 @@ names which guarantee holds it.
 
 | Component | Error condition | Resolves to | Source | Invariant |
 |---|---|---|---|---|
+| Request guard | Non-loopback `Host` (any route); a foreign `Origin` (every route but `/v1/hook`) | `/v1/hook`: `NO_DECISION` (200), nothing evaluated · other routes: `403` | `index.ts:432` | 2 |
 | JSON body parser | Unparseable JSON | `undefined` body → `NO_DECISION` | `index.ts:188` | 2 |
 | Hook schema | Wrong-shape payload | `NO_DECISION` (200) | `index.ts:213` | 2 |
 | Hook handler | Any thrown exception | `NO_DECISION` (200) | `index.ts:335` | 2 |

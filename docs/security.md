@@ -26,7 +26,8 @@ deliberately *not* in scope at v0. Read [concepts.md](concepts.md) for the vocab
 > **Security.** Localhost binding **is** the v0 security model. The daemon binds
 > `127.0.0.1` only, the address is a hard-coded constant that is never configurable, there
 > is no authentication, and there is no CORS. The inbox is served same-origin by the same
-> process, so there is no legitimate cross-origin client to authorize.
+> process, so there is no legitimate cross-origin client to authorize — and a request that
+> is not addressed to loopback, or that announces another origin, is refused.
 
 There is no network service to attack. Everything — the daemon, the SQLite database, the
 policy file, and the browser inbox — lives on one machine on loopback. The bind address is a
@@ -46,7 +47,7 @@ The binding is not merely a default; it is asserted at startup, and the daemon r
 if it finds itself bound to anything but loopback:
 
 ```ts
-// packages/daemon/src/index.ts:440 — startup invariant, covered by a test
+// packages/daemon/src/index.ts:460 — startup invariant, covered by a test
 for (const addr of app.addresses()) {
   if (addr.address !== HOST) {
     await app.close();
@@ -76,6 +77,46 @@ joined onto the filesystem at request time, so there is no path-traversal surfac
 The lookup is a map `get` against pre-loaded keys, returning `404` for anything absent
 (`packages/daemon/src/ui-static.ts:82`). UI routes are registered last so `/v1/*` API routes
 always win (`ui-static.ts:71`, and the ordering note at `index.ts:420`).
+
+**Local, same-origin requests only.** Binding loopback limits who can *connect*, but a
+browser connects on behalf of any page it has open. After a DNS rebind a hostile page is
+same-origin as far as the browser is concerned, and only the `Host` header still names its
+domain; a plain cross-site page keeps a loopback `Host` but announces its own `Origin`. So
+every route requires a loopback `Host`, a browser-sent `Origin` must be the daemon's own,
+and no response may be framed:
+
+```ts
+// packages/daemon/src/index.ts:432
+app.addHook("onRequest", async (req, reply) => {
+  reply.headers({ "X-Frame-Options": "DENY", "Content-Security-Policy": "frame-ancestors 'none'" });
+  const host = (req.headers.host ?? "").toLowerCase();
+  const origin = req.headers.origin?.toLowerCase();
+  const onHookPath = req.routeOptions.url === "/v1/hook";
+  const sameOrigin = onHookPath || origin === undefined || origin === `http://${host}`;
+  if (/^(127\.0\.0\.1|localhost)(:\d+)?$/.test(host) && sameOrigin) return;
+  return onHookPath
+    ? reply.code(200).send(NO_DECISION)
+    : reply.code(403).send({ error: "non-local Host or cross-origin request" });
+});
+```
+
+A refused request gets `403` — except on `/v1/hook`, which keeps its never-brick contract and
+answers `200 {}` without evaluating anything. The hook path also skips the `Origin` rule:
+Claude Code is not a browser, and a browser-oriented check must never be able to switch
+Brezia off. There, a cross-site page is kept out by the browser's own preflight for JSON
+and by payload validation, rather than by this guard.
+
+Three kinds of page are covered. A **rebound** page fails the `Host` rule. A **cross-site**
+page fails the `Origin` rule whenever its request announces an `Origin` — every POST, and
+every `fetch` or `EventSource` made in CORS mode — and so does a page on another local
+port. A page that tries to **frame** the real inbox, to steal a click or the `a` keystroke
+that approves, is stopped by the frame headers. What the guard does not refuse is a
+cross-site request that carries no `Origin` (a plain navigation, an `<img>`, a `no-cors`
+`GET`): the daemon answers it, the browser withholds the response from the page, and no
+`GET` route changes state. The tests forge a rebound page, a cross-site page, and a page on
+another local port, and assert that each is refused on every route and cannot approve a
+held request; a further test asserts the frame headers
+(`packages/daemon/src/hook-endpoint.test.ts:272`).
 
 This is the whole of the v0 boundary. It must never be widened: no permissive CORS, no
 configurable bind address, no auth bolted on to compensate — the correct posture is *stay on

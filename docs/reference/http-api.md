@@ -44,15 +44,19 @@ Routes are registered in that order; the UI catch-all is registered **last** so 
 
 > **Security.** There is no auth, no CORS, and no configurable bind address. Localhost
 > binding *is* the v0 security model, and the inbox is served same-origin, so there is no
-> legitimate cross-origin client. See [configuration.md](configuration.md#ports-and-binding)
+> legitimate cross-origin client. Every route refuses a request whose `Host` is not
+> loopback, or that announces another `Origin`, with `403` (`200 {}` on `/v1/hook`) — see
+> [below](#boundary-behavior-parsing-errors-binding),
+> [configuration.md](configuration.md#ports-and-binding)
 > and [../architecture.md](../architecture.md#runtime-topology).
 
 ---
 
 ## Boundary behavior: parsing, errors, binding
 
-Three server-wide guards shape every request before any handler runs. They exist to
-satisfy **invariant 2** — ingestion never breaks the user.
+Four server-wide guards shape every request before any handler runs. The first three
+exist to satisfy **invariant 2** — ingestion never breaks the user; the fourth keeps other
+web pages out.
 
 **Malformed JSON never 400s.** A custom content-type parser hands the handler `undefined`
 instead of throwing, so a garbage body becomes a controlled no-decision rather than a
@@ -87,8 +91,18 @@ app.setErrorHandler((_err, req, reply) => {
 ```
 
 **The daemon binds loopback only.** `start()` asserts every bound address is `127.0.0.1`
-after `listen()` and refuses to run otherwise (`packages/daemon/src/index.ts:440`) — a
+after `listen()` and refuses to run otherwise (`packages/daemon/src/index.ts:460`) — a
 test exercises the real bind (`hook-endpoint.test.ts:253`).
+
+**Other web pages are kept out.** An `onRequest` hook refuses any request whose `Host` is
+not `127.0.0.1` or `localhost`, or that carries an `Origin` other than the daemon's own,
+with `403` — the defense against DNS rebinding and cross-site requests. On `/v1/hook` the
+refusal is `200 {}` instead, with nothing evaluated, and the `Origin` rule does not apply.
+Every response also carries `X-Frame-Options: DENY` and
+`Content-Security-Policy: frame-ancestors 'none'`, so the inbox cannot be embedded in
+another page (`packages/daemon/src/index.ts:432`; tests at `hook-endpoint.test.ts:272`).
+Rationale in
+[../security.md](../security.md#the-v0-security-model-localhost-binding).
 
 > **Failure direction.** Ingestion-boundary errors resolve to the hook protocol's
 > no-decision response (`{}`) → Claude Code's native flow proceeds. Nothing here fails

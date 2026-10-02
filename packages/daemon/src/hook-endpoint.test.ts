@@ -264,3 +264,128 @@ describe("daemon binds loopback only", () => {
     }
   });
 });
+
+// Binding loopback stops other MACHINES; this stops other WEB PAGES. A browser
+// connects to 127.0.0.1 on behalf of any page it has open. After a DNS rebind that
+// page is same-origin to the browser and only the Host header still names its
+// domain; a plain cross-site page keeps a loopback Host but announces its Origin.
+describe("daemon answers only local, same-origin requests", () => {
+  const REBOUND = { host: "evil.example:4747" };
+  // What a browser really sends on a POST after a rebind: an Origin that matches Host.
+  const REBOUND_POST = { host: "evil.example:4747", origin: "http://evil.example:4747" };
+  const CROSS_SITE = { host: "127.0.0.1:4747", origin: "https://evil.example" };
+  const OTHER_PORT = { host: "127.0.0.1:4747", origin: "http://127.0.0.1:5173" };
+  const INBOX = { host: "127.0.0.1:4747", origin: "http://127.0.0.1:4747" };
+  const FOREIGN: Array<[string, Record<string, string>]> = [
+    ["a rebound page", REBOUND],
+    ["a rebound page's POST", REBOUND_POST],
+    ["a cross-site page", CROSS_SITE],
+    ["a page on another local port", OTHER_PORT],
+  ];
+
+  it.each<[number, Record<string, string>]>([
+    [200, { host: "127.0.0.1:4747" }],
+    [200, { host: "localhost:4747" }],
+    [200, { host: "localhost" }],
+    [200, INBOX],
+    [200, { host: "localhost:4747", origin: "http://localhost:4747" }],
+    [200, { host: "LOCALHOST:4747", origin: "HTTP://LOCALHOST:4747" }],
+    [403, REBOUND],
+    [403, REBOUND_POST],
+    [403, { host: "127.0.0.1.evil.example:4747" }],
+    [403, { host: "localhost.evil.example" }],
+    [403, { host: "evil.localhost:4747" }],
+    [403, { host: "evil-localhost:4747" }],
+    [403, { host: "127x0x0x1:4747" }],
+    [403, { host: "localhost.:4747" }],
+    [403, { host: "127.0.0.2:4747" }],
+    [403, { host: "0.0.0.0:4747" }],
+    [403, { host: "[::1]:4747" }],
+    [403, CROSS_SITE],
+    [403, OTHER_PORT],
+    [403, { host: "127.0.0.1:4747", origin: "http://127.0.0.1:47470" }],
+    [403, { host: "127.0.0.1:4747", origin: "https://127.0.0.1:4747" }],
+    [403, { host: "127.0.0.1:4747", origin: "http://localhost:4747" }],
+    [403, { host: "127.0.0.1:4747", origin: "null" }],
+  ])("GET /v1/stats → %i for %j", async (status, headers) => {
+    const app = await createServer();
+    const res = await app.inject({ method: "GET", url: "/v1/stats", headers });
+    expect(res.statusCode).toBe(status);
+    await app.close();
+  });
+
+  it.each(FOREIGN)("%s is refused on every route", async (_who, headers) => {
+    const app = await createServer();
+    const routes: Array<["GET" | "POST" | "OPTIONS", string]> = [
+      ["GET", "/v1/requests"],
+      ["GET", "/v1/stream"],
+      ["GET", "/v1/stats?x=/v1/hook"],
+      ["GET", "/"],
+      ["GET", "/assets/x.js"],
+      ["POST", "/v1/approval-events"],
+      ["OPTIONS", "/v1/requests"],
+    ];
+    for (const [method, url] of routes) {
+      const res = await app.inject({ method, url, headers });
+      expect([method, url, res.statusCode]).toEqual([method, url, 403]);
+    }
+    await app.close();
+  });
+
+  it("no response may be framed by another page (clickjacking the inbox)", async () => {
+    const app = await createServer();
+    const res = await app.inject({ method: "GET", url: "/" });
+    expect(res.headers["x-frame-options"]).toBe("DENY");
+    expect(res.headers["content-security-policy"]).toBe("frame-ancestors 'none'");
+    await app.close();
+  });
+
+  it.each(FOREIGN)("%s cannot approve a held request", async (_who, headers) => {
+    const app = await createServer({ policy: askPolicy, holdTimeoutMs: 5000 });
+    const hookP = app.inject({ method: "POST", url: "/v1/hook", payload: bashPayload("rm -rf x") });
+    const id = await firstPendingId(app);
+    const forged = await app.inject({
+      method: "POST",
+      url: `/v1/requests/${id}/decision`,
+      headers,
+      payload: { action: "approve" },
+    });
+    expect(forged.statusCode).toBe(403);
+    // Still held: the real inbox's deny is what the agent gets, not the forged approve.
+    await app.inject({
+      method: "POST",
+      url: `/v1/requests/${id}/decision`,
+      headers: INBOX,
+      payload: { action: "deny" },
+    });
+    expect((await hookP).json().hookSpecificOutput.permissionDecision).toBe("deny");
+    await app.close();
+  });
+
+  // The second spelling routes to the same handler; the guard must key on the matched
+  // route, not the raw URL, or it would answer 403 there instead of no-decision.
+  it.each(["/v1/hook", "/v1/%68ook"])("POST %s from a non-loopback Host → no decision, never evaluated", async (url) => {
+    const app = await createServer({ policy: denyPolicy });
+    const res = await app.inject({
+      method: "POST",
+      url,
+      headers: REBOUND,
+      payload: bashPayload("ls"),
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({}); // never-brick; an evaluated call would be a deny
+    await app.close();
+  });
+
+  it("the hook path ignores Origin — Claude Code is not a browser", async () => {
+    const app = await createServer({ policy: denyPolicy });
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/hook",
+      headers: { host: "127.0.0.1:4747", origin: "null" },
+      payload: bashPayload("ls"),
+    });
+    expect(res.json().hookSpecificOutput?.permissionDecision).toBe("deny");
+    await app.close();
+  });
+});

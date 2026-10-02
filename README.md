@@ -124,6 +124,9 @@ by hand if you want them gone. Stop the daemon with Ctrl-C in the `brezia up` te
 
 - Binds `127.0.0.1` only — never configurable, asserted at startup. Localhost binding
   *is* the v0 security model; there is no cross-origin client.
+- Refuses requests not addressed to `127.0.0.1`/`localhost` or announcing another origin,
+  and forbids framing — so another web page can't read from or act on the inbox, DNS
+  rebinding included.
 - No telemetry, phone-home, or update checks. Ever.
 - Agent-supplied strings are treated as untrusted everywhere a human reads them.
 - The audit log is append-only and hash-chained; `brezia verify` proves it hasn't been
