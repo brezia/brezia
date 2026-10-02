@@ -96,11 +96,11 @@ The write itself is atomic and backed up (`packages/cli/src/init.ts:86,95`): a t
 a crash mid-write can't corrupt `settings.json`. A file that isn't valid JSON is refused
 untouched with an actionable error (`init.ts:70`).
 
-> **Timeout note.** `init` writes `timeout: 300` into settings, while the daemon's default
-> **hold** timeout is `600` s (`DEFAULT_HOLD_TIMEOUT_MS`, `packages/daemon/src/index.ts:61`,
-> aligned to Claude Code's own 600 s default). The settings `timeout` is the shorter of the
-> two, so in practice Claude Code proceeds via native flow at ~300 s. Either way the held
-> response resolves to `NO_DECISION` if no human decides — the never-brick outcome.
+> **Timeout note.** `init` writes `timeout: 300` into settings, and the daemon's default
+> **hold** timeout is `290` s (`DEFAULT_HOLD_TIMEOUT_MS`, `packages/daemon/src/index.ts:61`)
+> — deliberately just under it, so the daemon gives up first: at ~290 s it marks the request
+> `deferred`, chains it, and answers `NO_DECISION`, and Claude Code proceeds via its native
+> flow — the never-brick outcome. (With no `timeout` set, Claude Code's own default is 600 s.)
 
 ---
 
@@ -196,7 +196,7 @@ export const PORT = 4747;
   (`packages/daemon/src/index.ts:460`). A test binds for real and checks it
   (`hook-endpoint.test.ts:253`).
 - **Port-in-use** is reported with a clear, actionable message rather than a stack trace
-  (`packages/cli/src/up.ts:114`).
+  (`packages/cli/src/up.ts:131`).
 
 > **Security.** Localhost binding *is* the v0 security model — no auth, no CORS, no
 > configurable address, and the inbox served same-origin so there is no legitimate

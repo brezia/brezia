@@ -38,7 +38,7 @@ npm test          # run the whole Vitest suite
 The stack is **decided and fixed**: Node LTS, npm workspaces,
 TypeScript strict, Vitest, tsup for packages, Vite for the UI, React with `useReducer` (no
 state library), Fastify, better-sqlite3 (synchronous, WAL), zod, yaml + chokidar,
-picomatch, shell-quote, ulid. No ORM — the schema is five tables. Do not substitute or add
+picomatch, shell-quote, ulid. No ORM — the schema is three tables. Do not substitute or add
 to this list without a decision (see [below](#a-new-dependency-is-a-decision)).
 
 ---

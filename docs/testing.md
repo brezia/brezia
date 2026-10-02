@@ -165,8 +165,8 @@ listed. Observed runtime behavior outranks every doc; a captured fixture is how 
 proven and pinned.
 
 The ritual also captures *regressions found in the wild*. A curl command carrying a bearer
-credential slipped the secrets flag during a live session; the exact payload was captured to
-`fixtures/pretooluse-secret-curl.json` and made a permanent test that it must now flag:
+credential slipped the secrets flag during a live session; a scrubbed copy of the payload was
+saved as `fixtures/pretooluse-secret-curl.json` and made a permanent test that it must now flag:
 
 ```ts
 // packages/shared/src/secrets.test.ts:66

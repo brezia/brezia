@@ -242,10 +242,20 @@ in [internals/audit-chain.md](internals/audit-chain.md).
 ## No telemetry, ever
 
 Brezia has **no telemetry, no phone-home, and no update checks**. There is no network egress
-of any kind — the daemon only *receives* on loopback. The only outbound HTTP in the codebase
-is the CLI reading the daemon's own local stats/stream endpoints
-(`packages/cli/src/up.ts:54`, `:130`, both to `http://127.0.0.1:4747`). No analytics
-endpoint, no crash reporter, no version ping exists anywhere, and none may be added.
+of any kind — the daemon only *receives* on loopback. The only HTTP the shipped code
+originates is loopback traffic to the daemon itself: the CLI reading the local stats and
+stream endpoints (`packages/cli/src/net.ts:7`, `up.ts:70`), the fallback hook shim posting a
+payload (`packages/hook-shim/src/index.ts:35`), and the inbox's same-origin calls
+(`packages/ui/src/api.ts`). No analytics endpoint, no crash reporter, no version ping
+exists anywhere, and none may be added.
+
+**What stays on disk.** Nothing leaves the machine, but the local database is not redacted.
+The `events` table keeps each call's full tool arguments — commands, paths, file contents —
+including calls flagged `secrets_pattern` (`packages/daemon/src/sqlite-storage.ts:98`); the
+`first_time_command` flag reads them back (`:126`). The audit chain, and therefore
+`brezia export`, records the tool, session, decision, and reason but not the arguments
+(`packages/daemon/src/index.ts:275`), and the diagnostics log never writes them (`:288`).
+Treat `~/.brezia/brezia.db` like a shell history file.
 
 ---
 

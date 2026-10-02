@@ -195,8 +195,9 @@ const body = await new Promise<unknown>((resolve) => {
 });
 ```
 
-The default hold window is 600 s (`DEFAULT_HOLD_TIMEOUT_MS`,
-`packages/daemon/src/index.ts:61`), aligned with Claude Code's default HTTP-hook timeout.
+The default hold window is 290 s (`DEFAULT_HOLD_TIMEOUT_MS`,
+`packages/daemon/src/index.ts:61`) — just under the 300 s hook timeout `brezia init`
+installs, so Brezia defers before Claude Code times out.
 On timeout the request is marked `deferred` and a `deferral` audit entry
 (`cause: hold_timeout`) is chained. The held-requests model and its race-safety are in
 [../architecture.md](../architecture.md#the-held-requests-model); the full pipeline with

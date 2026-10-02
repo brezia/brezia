@@ -24,7 +24,7 @@ actually computed see [../internals/policy-evaluation.md](../internals/policy-ev
 ## The mental model
 
 Think of `brezia.yaml` as a **firewall rule set**: an ordered list of tiers, evaluated top
-to bottom, **first match wins** (decision 010). There is no scoring, no weighting, no
+to bottom, **first match wins** (decision 004). There is no scoring, no weighting, no
 "most specific rule" — outcomes are derivable by reading the file straight down. Two rules
 follow from that and never change:
 
