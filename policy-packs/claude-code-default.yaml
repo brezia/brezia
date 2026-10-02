@@ -1,0 +1,65 @@
+# Brezia default policy pack for Claude Code.
+#
+# Evaluation is ordered, first match wins. A matcher matches when ALL its present
+# conditions hold (tool AND args AND bash-class AND flags); a tier's `match` list is
+# OR. `unmatched: ask` is the floor — nothing is ever allowed by omission.
+#
+# Tuned so a fresh install clears the majority of a routine session: read-only tools
+# and classified-safe shell commands auto-resolve, while edits, anything mutating or
+# network-bound, and anything carrying a secrets-shaped argument wait for a human.
+# The comment blocks below double as documentation for the brezia.yaml format.
+version: 1
+
+defaults:
+  # No allow by omission: any event matching no tier below asks a human.
+  unmatched: ask
+  # Single-player: a held call that outlives the hook window defers to the runtime's
+  # native permission flow rather than blocking (the never-brick guarantee).
+  on_expiry: defer
+
+tiers:
+  # 1. SECRETS FIRST. Any argument that looks like a credential — a private key, a
+  #    cloud access key, an `Authorization: Bearer …` header, an `api_key`/`secret`/
+  #    `token`/`password` value (including JSON-quoted), a `.env` reference, or a
+  #    high-entropy blob — escalates to a human, whatever the tool. Placed first so it
+  #    wins over the allow tiers below: `cat .env` is a read, but it still stops here.
+  - name: escalate-secrets
+    match:
+      - flags: [secrets_pattern]
+    action: ask
+
+  # 2. READ-ONLY tools and classified-safe shell reads auto-resolve. Bash classes come
+  #    from the curated table — read: ls, cat, head, tail, grep, which, echo, du, pwd,
+  #    wc, stat; vcs-read: git status/diff/log/show/rev-parse/ls-files/
+  #    blame/describe. A compound or expansion command (`ls && curl …`, `cat $(…)`) is
+  #    unclassifiable and never matches here — it falls through to ask.
+  - name: allow-reads
+    match:
+      - tool: Read
+      - tool: Grep
+      - tool: Glob
+      - tool: Bash
+        bash: [read, vcs-read]
+    action: allow
+
+  # 3. ROUTINE DEV — running the tests and building — auto-resolves (Bash classes
+  #    test: npm test, pytest, vitest; build: npm run build, tsc). This deliberately
+  #    does NOT cover `npm install`, an arbitrary `npm run <script>`, or `make`, which
+  #    mutate or execute arbitrary scripts and so remain ask.
+  - name: allow-dev
+    match:
+      - tool: Bash
+        bash: [test, build]
+    action: allow
+
+  # Everything else has no matching tier and falls to `unmatched: ask`: Write, Edit,
+  # mutating shell (rm, mv, curl, git push/commit, npm install, chmod), network tools,
+  # and any unclassifiable command — each waits for a human in the inbox.
+
+# ANTI-SPLITTING ceiling: after 200 auto-allows in a day for one session, further
+# would-be allows escalate to ask — so an agent can't launder a large change into
+# many individually-cheap approved calls. Ships in v0, not deferred.
+limits:
+  - per: session
+    window: 24h
+    max_asks_auto_allowed: 200

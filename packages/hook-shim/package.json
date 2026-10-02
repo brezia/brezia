@@ -1,0 +1,14 @@
+{
+  "name": "@brezia/hook-shim",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "brezia-shim": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  }
+}

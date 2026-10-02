@@ -1,0 +1,17 @@
+{
+  "name": "brezia",
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "brezia": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@brezia/shared": "*",
+    "@brezia/daemon": "*"
+  }
+}

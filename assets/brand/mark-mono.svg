@@ -1,0 +1,7 @@
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Brezia">
+  <path d="M50 20 L150 20 A30 30 0 0 1 180 50 L180 85 L163 85 L163 115 L180 115 L180 150 A30 30 0 0 1 150 180 L50 180 A30 30 0 0 1 20 150 L20 50 A30 30 0 0 1 50 20 Z" fill="none" stroke="#1A1E24" stroke-width="4"/>
+  <path d="M38 68 C80 56 120 62 172 58" stroke="#1A1E24" stroke-width="7" stroke-linecap="round" opacity="0.55"/>
+  <path d="M38 100 C82 88 118 112 160 100 L163 100" stroke="#1A1E24" stroke-width="7" stroke-linecap="round" opacity="0.55"/>
+  <circle cx="171.5" cy="100" r="9" fill="#1A1E24"/>
+  <path d="M38 132 C80 144 120 138 172 142" stroke="#1A1E24" stroke-width="7" stroke-linecap="round" opacity="0.55"/>
+</svg>

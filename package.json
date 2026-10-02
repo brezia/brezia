@@ -1,0 +1,42 @@
+{
+  "name": "brezia-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "packages/shared",
+    "packages/policy",
+    "packages/daemon",
+    "packages/hook-shim",
+    "packages/cli",
+    "packages/ui"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "overrides": {
+    "esbuild": "^0.28.2"
+  },
+  "scripts": {
+    "build": "npm run build -w @brezia/shared -w @brezia/policy -w @brezia/daemon -w @brezia/hook-shim -w brezia -w @brezia/ui",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "smoke": "node scripts/smoke.mjs",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "dev:ui": "npm run dev -w @brezia/ui",
+    "dev:daemon": "npm run dev -w @brezia/daemon"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.5.0",
+    "@types/picomatch": "^3.0.1",
+    "@types/react": "^18.3.5",
+    "@types/shell-quote": "^1.7.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^6.0.5",
+    "jsdom": "^25.0.0",
+    "tsup": "^8.2.4",
+    "typescript": "^5.5.4",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
+  }
+}

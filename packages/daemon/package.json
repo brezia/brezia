@@ -1,0 +1,29 @@
+{
+  "name": "@brezia/daemon",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@brezia/shared": "*",
+    "@brezia/policy": "*",
+    "better-sqlite3": "^12.11.1",
+    "chokidar": "^3.6.0",
+    "fastify": "^5.10.0",
+    "ulid": "^2.3.0",
+    "yaml": "^2.5.1"
+  }
+}

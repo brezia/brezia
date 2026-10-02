@@ -1,0 +1,10 @@
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Brezia">
+  <rect x="20" y="20" width="160" height="160" rx="30" fill="#1A1E24"/>
+  <path d="M163 85 L180 85" stroke="#12151A" stroke-width="2"/>
+  <path d="M163 85 L163 115" stroke="#12151A" stroke-width="2"/>
+  <path d="M163 115 L180 115" stroke="#12151A" stroke-width="2"/>
+  <path d="M38 68 C80 56 120 62 172 58" stroke="#7FA8A0" stroke-width="7" stroke-linecap="round"/>
+  <path d="M38 100 C82 88 118 112 160 100 L163 100" stroke="#7FA8A0" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="171.5" cy="100" r="9" fill="#E2A542"/>
+  <path d="M38 132 C80 144 120 138 172 142" stroke="#7FA8A0" stroke-width="7" stroke-linecap="round"/>
+</svg>
