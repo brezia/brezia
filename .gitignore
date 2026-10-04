@@ -162,6 +162,11 @@ fixtures/raw/
 # Claude Code local overrides (settings.json is committed; local is not)
 .claude/settings.local.json
 
+# Codex config — local only, never commit
+AGENTS.md
+.agents/
+.codex/
+
 # OS cruft
 .DS_Store
 Thumbs.db
