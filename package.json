@@ -17,7 +17,7 @@
     "esbuild": "^0.28.2"
   },
   "scripts": {
-    "build": "npm run build -w @brezia/shared -w @brezia/policy -w @brezia/daemon -w @brezia/hook-shim -w brezia -w @brezia/ui",
+    "build": "npm run build -w @brezia/shared -w @brezia/policy -w @brezia/daemon -w @brezia/hook-shim -w @brezia/ui -w brezia",
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "node scripts/smoke.mjs",

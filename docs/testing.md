@@ -32,7 +32,7 @@ npm run typecheck # tsc --noEmit per workspace
 npm run build     # tsup (packages) + vite (ui), dependency order
 ```
 
-`npm test` maps to `vitest run` (`package.json:18`); each package carries its own
+`npm test` maps to `vitest run` (`package.json:21`); each package carries its own
 `vitest.config.ts`. The audit chain verifies end-to-end as part of the run (invariant 3), so
 a green suite is also a statement that the chain is intact. Tests use an in-memory SQLite
 (`":memory:"`) and Fastify's `app.inject()` — there is no external service to stand up.

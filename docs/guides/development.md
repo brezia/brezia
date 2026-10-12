@@ -20,6 +20,7 @@ tree building and green — and the rules a change must not violate.
 - [A new dependency is a decision](#a-new-dependency-is-a-decision)
 - [Review discipline: agents and slash commands](#review-discipline-agents-and-slash-commands)
 - [The never-drift rules](#the-never-drift-rules)
+- [Releasing](#releasing)
 
 ---
 
@@ -69,23 +70,25 @@ Every package except the UI builds with **tsup** to `dist/` (ESM `.js` + `.d.ts`
 builds with **Vite** into the daemon's static directory. From the root:
 
 ```sh
-npm run build     # builds shared → policy → daemon → hook-shim → brezia → ui, in order
+npm run build     # builds shared → policy → daemon → hook-shim → ui → brezia, in order
 ```
 
 The root `build` script names the workspaces explicitly in dependency order so downstream
-packages compile against fresh upstream output (`package.json:17`). The tsup configs are
+packages compile against fresh upstream output (`package.json:20`). The tsup configs are
 near-uniform (`format: ["esm"]`, `sourcemap`, `clean`, `target: node20`), with two
 deliberate differences:
 
 - **`cli`** injects a shebang banner (`#!/usr/bin/env node`) so `dist/index.js` is directly
   executable as the `brezia` bin, and skips `.d.ts` — it is an app, not a library
-  (`packages/cli/tsup.config.ts:6`).
+  (`packages/cli/tsup.config.ts:7`). It is also the only published package: it bundles the
+  private `@brezia/*` workspaces into `dist/` and copies the built inbox (`static/`) and
+  the default policy pack beside it, which is why `ui` builds before it.
 - **`ui`** builds with Vite straight into `../daemon/static` (`emptyOutDir: true`), so the
   daemon serves it same-origin; it is never published separately
   (`packages/ui/vite.config.ts:20`). That directory is gitignored.
 
 `"type": "module"` is set throughout. Typecheck across all workspaces with `npm run
-typecheck` (`tsc --noEmit` per package, `package.json:20`).
+typecheck` (`tsc --noEmit` per package, `package.json:24`).
 
 ---
 
@@ -229,6 +232,20 @@ A few standing constraints that keep the codebase from rotting:
 When a decided semantic seems ambiguous, ask — don't pick. This code sits in the tool-call
 path of other people's agents; predictable outranks clever, and failure semantics outrank
 features.
+
+---
+
+## Releasing
+
+Only `packages/cli` (npm name `brezia`) is published. Its `prepack` runs the full root
+build, so the tarball always carries a fresh bundle, inbox, and default pack.
+
+```sh
+npm version <x.y.z> -w brezia --no-git-tag-version   # bump packages/cli/package.json
+npm pack -w brezia                                   # inspect; install the .tgz in a scratch repo, run init/up
+npm publish -w brezia
+git tag v<x.y.z> && git push origin v<x.y.z>
+```
 
 ---
 

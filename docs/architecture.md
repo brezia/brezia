@@ -271,7 +271,9 @@ not a job system.
 | `ui` | **Vite** | `packages/daemon/static/` (gitignored) | Built *into* the daemon, not published separately. |
 
 Binaries: the `cli` package publishes the `brezia` bin (`packages/cli/package.json:5` →
-`dist/index.js`); `hook-shim` publishes `brezia-shim`.
+`dist/index.js`). It is the only package on npm — the private `@brezia/*` workspaces are
+bundled into it, with the inbox and default policy pack copied beside `dist/`.
+`hook-shim` builds the `brezia-shim` bin but is not published.
 
 The daemon serves the built inbox from an **in-memory map** loaded at startup
 (`registerUi`, `packages/daemon/src/ui-static.ts:61`), not from disk at request time — so
@@ -279,7 +281,7 @@ there is no path-traversal surface and no `@fastify/static` dependency. UI route
 registered *last* so `/v1/*` always wins; when the UI has not been built, a friendly
 placeholder is served instead.
 
-Root scripts tie it together (`package.json:16`): `npm run build` builds all packages in
+Root scripts tie it together (`package.json:19`): `npm run build` builds all packages in
 dependency order, `npm test` runs the entire Vitest suite (the invariant tests included),
 `npm run typecheck` runs `tsc --noEmit` per workspace. Stack specifics — and the "a new
 dependency is a decision" rule — are in [guides/development.md](guides/development.md).

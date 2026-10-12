@@ -1,17 +1,42 @@
 {
   "name": "brezia",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "bin": {
     "brezia": "./dist/index.js"
   },
+  "description": "An open-source approval control plane for AI agents: routine tool calls clear themselves, the rest wait in a local inbox, every decision lands in a tamper-evident log.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brezia/brezia.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/brezia/brezia#readme",
+  "bugs": "https://github.com/brezia/brezia/issues",
+  "keywords": ["claude-code", "ai-agents", "approval", "permissions", "audit-log"],
+  "engines": {
+    "node": ">=20"
+  },
+  "files": ["dist", "static", "policy-packs"],
   "scripts": {
     "build": "tsup",
+    "prepack": "npm run build --prefix ../..",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@brezia/shared": "*",
-    "@brezia/daemon": "*"
+    "better-sqlite3": "^12.11.1",
+    "chokidar": "^3.6.0",
+    "fastify": "^5.10.0",
+    "picomatch": "^4.0.2",
+    "shell-quote": "^1.8.1",
+    "ulid": "^2.3.0",
+    "yaml": "^2.5.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@brezia/daemon": "*",
+    "@brezia/shared": "*"
   }
 }

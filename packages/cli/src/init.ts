@@ -26,10 +26,10 @@ export function resolvePaths(scope: Scope, env: { cwd?: string; home?: string } 
     : { settingsFile: join(cwd, ".claude", "settings.json"), policyFile: join(cwd, "brezia.yaml") };
 }
 
-// The bundled default policy pack, resolved relative to this package (works from
-// src and from the tsup build; packaging includes policy-packs in Phase F).
+// Default pack: copied beside dist/ when packaged (tsup.config.ts), else the repo root's.
 export function defaultPackPath(): string {
-  return fileURLToPath(new URL("../../../policy-packs/claude-code-default.yaml", import.meta.url));
+  const at = (up: string) => fileURLToPath(new URL(`${up}policy-packs/claude-code-default.yaml`, import.meta.url));
+  return existsSync(at("../")) ? at("../") : at("../../../");
 }
 export function readDefaultPack(): string {
   return readFileSync(defaultPackPath(), "utf8");

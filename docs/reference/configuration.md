@@ -140,7 +140,7 @@ flowchart TD
 
 So a repo-local `brezia.yaml` overrides a user one, which overrides the bundled default
 (`policy-packs/claude-code-default.yaml`, resolved by `defaultPackPath`,
-`packages/cli/src/init.ts:31`). If nothing is loaded at all, the daemon still runs the
+`packages/cli/src/init.ts:30`). If nothing is loaded at all, the daemon still runs the
 no-allow floor — `unmatched: ask`, empty tiers — so it never auto-allows
 (`DEFAULT_POLICY`/`SAFE_DEFAULT_POLICY`, `packages/daemon/src/index.ts:53`,
 `packages/daemon/src/policy-loader.ts:7`).

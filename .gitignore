@@ -173,3 +173,9 @@ Thumbs.db
 
 # Built inbox served by the daemon (vite build output)
 packages/daemon/static/
+
+# Copied into the published CLI package by its build (packages/cli/tsup.config.ts)
+packages/cli/static/
+packages/cli/policy-packs/
+packages/cli/README.md
+packages/cli/LICENSE
